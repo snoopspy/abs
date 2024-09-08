@@ -9,5 +9,6 @@ all: $(TARGET)
 
 $(TARGET): abs.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
+
 clean:
 	rm -f *.o $(TARGET)
