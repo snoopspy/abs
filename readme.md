@@ -13,22 +13,7 @@ Android Bluetooth Sniffer
 How to run
 ===
 
-* Add virtual network interface
-```
-sudo ip link add bluetooth0 type dummy; ifconfig bluetooth0 up
-```
-
 * Run abs
 ```
-sudo ./abs bluetooth0
-```
-
-* Add LD_PRELOAD environment variable
-```
-export LD_PRELOAD=$PWD/libabspcap.so
-```
-
-* Run network sniffer such as wireshark
-```
-sudo wireshark
+sudo ./abs | wireshark -i - -k
 ```

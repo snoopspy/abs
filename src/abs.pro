@@ -3,6 +3,6 @@ CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
 LIBS= -lpcap
-DESTDIR = $$PWD/../../bin
+DESTDIR = $$PWD/../bin
 SOURCES += \
 	abs.cpp
