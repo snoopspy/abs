@@ -73,19 +73,19 @@ int main() {
 			break;
 		}
 
+		static const int ShiftCount = 4; // strange to say buf, size must added by 4
 		uint8_t buf[BufSize];
-		readLen = fread(buf, 1, payloadLen, fp);
+		readLen = fread(buf + ShiftCount, 1, payloadLen, fp);
 		if (readLen != payloadLen) {
 			fprintf(stderr, "readLen=%lu payloadLen=%u\n", readLen, payloadLen);
 			break;
 		}
-		dump(buf, readLen);
+		dump(buf + ShiftCount, readLen);
 
 		pcap_pkthdr pkthdr;
 		gettimeofday(&pkthdr.ts, nullptr);
-		// strange to say buf, size must added by 4
-		pkthdr.caplen = pkthdr.len = bpf_u_int32(readLen + 4);
-		pcap_dump(reinterpret_cast<u_char*>(pcap_dumper), &pkthdr, buf - 4);
+		pkthdr.caplen = pkthdr.len = bpf_u_int32(readLen + ShiftCount);
+		pcap_dump(reinterpret_cast<u_char*>(pcap_dumper), &pkthdr, buf);
 		pcap_dump_flush(pcap_dumper);
 	}
 	pclose(fp);
