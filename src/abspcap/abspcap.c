@@ -50,5 +50,5 @@
 #define DLT_BLUETOOTH_LE_LL_WITH_PHDR	256
 
 int pcap_datalink(void* p) {
-    return DLT_BLUETOOTH_HCI_H4;
+    return DLT_BLUETOOTH_HCI_H4_WITH_PHDR;
 }

@@ -21,45 +21,21 @@ struct btsnoop_packet_header {
 };
 #pragma pack(pop)
 
-struct Param {
-	char *intfName_{nullptr};
-
-	bool parse(int argc, char** argv) {
-		if (argc != 2) {
-			usage();
-			return false;
-		}
-
-		intfName_ = argv[1];
-
-		return true;
-	}
-
-	static void usage() {
-		printf("syntax: abs <interface>\n");
-		printf("sample: abs bluetooth0\n");
-
-	}
-};
-
 void dump(unsigned char* p, size_t n) {
 	for (size_t i = 0; i < n;) {
-		printf("%02X ", p[i]);
+		fprintf(stderr, "%02X ", p[i]);
 		++i;
 		if (i != 0) {
 			if (i % 16 == 8)
-				printf(" ");
+				fprintf(stderr, " ");
 			if (i % 16 == 0)
-				printf("\n");
+				fprintf(stderr, "\n");
 		}
 	}
-	printf("\n");
+	fprintf(stderr, "\n");
 }
 
-int main(int argc, char* argv[]) {
-	Param param;
-	if (!param.parse(argc, argv)) return EXIT_FAILURE;
-
+int main() {
 	FILE* fp = popen("adb shell \"su -c '/data/data/com.termux/files/usr/bin/tail -c 0 -f /data/misc/bluetooth/logs/btsnoop_hci.log'\"", "r");
 	if (fp == nullptr) {
 		fprintf(stderr, "can not open pipe\n");
@@ -67,14 +43,18 @@ int main(int argc, char* argv[]) {
 	}
 	setvbuf(fp, NULL, _IONBF, 0);
 
-	char* dev = argv[1];
-	char errbuf[PCAP_ERRBUF_SIZE];
-	pcap_t* pcap = pcap_open_live(dev, 0, 0, 0, errbuf);
+	pcap_t* pcap = pcap_open_dead(DLT_BLUETOOTH_HCI_H4_WITH_PHDR, 0);
 	if (pcap == nullptr) {
-		fprintf(stderr, "couldn't open device %s(%s)\n", dev, errbuf);
+		fprintf(stderr, "pcap_open_dead return null");
 		return EXIT_FAILURE;
 	}
-	printf("datalink=%d\n", pcap_datalink(pcap));
+
+	pcap_dumper_t* pcap_dumper = pcap_dump_fopen(pcap, stdout);
+	if (pcap_dumper == nullptr) {
+		fprintf(stderr, "pcap_dump_fopen return null");
+		return EXIT_FAILURE;
+	}
+	pcap_dump_flush(pcap_dumper);
 
 	while (true) {
 		btsnoop_packet_header header;
@@ -101,13 +81,12 @@ int main(int argc, char* argv[]) {
 		}
 		dump(buf, readLen);
 
-		int res = pcap_inject(pcap, buf, readLen);
-		printf("pcap_inject return %d\n", res);
-		// int res = pcap_sendpacket(pcap, reinterpret_cast<const u_char*>(buf), readLen+50);
-		// if (res != 0) {
-		// 	fprintf(stderr, "pcap_sendpacket return %d error=%s\n", res, pcap_geterr(pcap));
-		// 	break;
-		// }
+		pcap_pkthdr pkthdr;
+		gettimeofday(&pkthdr.ts, nullptr);
+		// strange to say buf, size must added by 4
+		pkthdr.caplen = pkthdr.len = bpf_u_int32(readLen + 4);
+		pcap_dump(reinterpret_cast<u_char*>(pcap_dumper), &pkthdr, buf - 4);
+		pcap_dump_flush(pcap_dumper);
 	}
 	pclose(fp);
 	pcap_close(pcap);
