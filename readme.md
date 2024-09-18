@@ -5,6 +5,7 @@ Android Bluetooth Sniffer
   * Android Phone
     * Rooting
     * Install Termux : https://f-droid.org/en/packages/com.termux/
+    * Settings - Developer options - Enable Bluetooth HCP snoop log
 
   * Linux
     * Android Debug Bridge(adb)
