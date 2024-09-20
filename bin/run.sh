@@ -1,1 +1,1 @@
-sudo ./abs | wireshark -i - -k
+sudo ./abs | sudo wireshark -i - -k
